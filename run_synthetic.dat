@@ -1,0 +1,8 @@
+# Running file for SYNTHETIC_CREATE algorithm
+# 
+# Velocity Model 
+COL_FRACK 
+# Station file 
+station.dat 
+# Output file
+arrival.dat 

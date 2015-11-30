@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+#
+# Script para generar una grilla de tamanio de celdas diferente
+# Primero genera la parte central de la grilla que es mas densa, con un espaciamiento ds1
+# Luego general las celdas exterores de la grilla con espaciamiento mayor ds2
+
+import numpy as np
+
+# Tamanio de grilla
+x_min, x_max = -30., 30.
+y_min, y_max = -30., 30.
+
+# Limites de cuadrilatero con tamanio de celda menor
+x1, x2 = -3., 3.
+y1, y2 = -3., 3.
+
+x11, x22 = -15., 15.
+y11, y22 = -15., 15.
+
+
+
+# ds1: separacion de grilla mas densa
+ds1 = 0.5
+ls_x1 = []
+ls_y1 = []
+vec_x1 = np.arange(x_min, x_max+1, ds1)
+vec_y1 = np.arange(y_min, y_max+1, ds1)
+
+
+for val in vec_x1:
+    if val>=x1 and val<=x2:
+        ls_x1.append(val)
+for val in vec_y1:
+    if val>=y1 and val<=y2:
+        ls_y1.append(val)
+
+ls_coords_dens = []
+with open('events.dat', 'w') as ev_f:
+    for x in ls_x1:
+        for y in ls_y1:
+            ls_coords_dens.append((x, y))
+            ev_f.write('%9.4f    %9.4f\n' % (x, y))
+
+# ds2: separacion de grilla menos densa
+ds2 = 1.5
+ls_x2 = []
+ls_y2 = []
+vec_x2 = np.arange(x_min, x_max+1, ds2)
+vec_y2 = np.arange(y_min, y_max+1, ds2)
+
+for val in vec_x2:
+    if val>=x11 and val<=x22:
+        ls_x2.append(val)
+for val in vec_y2:
+    if val>=y11 and val<=y22:
+        ls_y2.append(val)
+
+ls_coords_nodens = []
+for valx in ls_x2:
+    for valy in ls_y2:
+        coord = (valx, valy)
+        if not coord in ls_coords_dens:
+            ls_coords_nodens.append(coord)
+
+with open('events.dat', 'a') as ev_f:
+    for coord in ls_coords_nodens:
+        ev_f.write('%9.4f    %9.4f\n' % (coord[0], coord[1]))
+
+# ds3: separacion de grilla menos menos densa
+ds3 = 3
+ls_x3 = []
+ls_y3 = []
+vec_x3 = np.arange(x_min, x_max+1, ds3)
+vec_y3 = np.arange(y_min, y_max+1, ds3)
+
+ls_coords_nodens2 = []
+for valx in vec_x3:
+    for valy in vec_y3:
+        coord = (valx, valy)
+        if not coord in ls_coords_dens and not coord in ls_coords_nodens:
+            ls_coords_nodens2.append(coord)
+
+with open('events.dat', 'a') as ev_f:
+    for coord in ls_coords_nodens2:
+        ev_f.write('%9.4f    %9.4f\n' % (coord[0], coord[1]))
+
+

@@ -1,0 +1,13 @@
+# Finite difference Parameter file
+# 
+#
+# Velocity model file name
+COL_FRACK
+# spatioal sampling (km)
+0.5
+# maximum depth to model (km)
+50
+# maximum horizontal distance (km)
+200
+# Source locations in depth [dmin dp dmax] (km)
+0 0.5 30

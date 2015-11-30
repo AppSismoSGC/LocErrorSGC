@@ -1,0 +1,214 @@
+#/usr/bin/env python
+#
+
+# Prueba de script que lea los resultados de las rutinas de matlab, calcule las diferencias
+# entre valores teoricos y reales, y muestre de manera grafica los resultados de desempenio
+# de las redes de estaciones propuestas
+
+import numpy as np
+import matplotlib.pylab as plt
+from itertools import groupby
+from operator import itemgetter
+
+# -------------------------------------------------------
+# Importar archivos de localicaciones reales y calculadas
+real_loc = open('real_loc.dat', 'r')
+calc_loc = open('loc_out.dat', 'r')
+
+real_data = real_loc.readlines()
+calc_data = calc_loc.readlines()
+# -------------------------------------------------------
+	
+
+# -------------------------------------------------------
+# Generar listas con los errores en horizontal y vertical
+# Guardar datos a archivo diffs_out.dat
+ls_diffs_hor = []
+ls_diffs_ver = []
+ls_deps = []
+ls_x = []
+ls_y = []
+num_evs_sitio = 0
+line1 = real_data[0].split()
+x0, y0, z0 = float(line1[1]), float(line1[2]), float(line1[3])
+with open('diffs_out.dat', 'w') as out_f:
+    for i in range(len(real_data)):
+        ev_id = real_data[i].split()[0]
+        real_x = float(real_data[i].split()[1])
+        ls_x.append(real_x)
+        calc_x = float(calc_data[i].split()[1])
+        real_y = float(real_data[i].split()[2])
+        ls_y.append(real_y)
+        calc_y = float(calc_data[i].split()[2])
+        real_z = float(real_data[i].split()[3])
+        calc_z = float(calc_data[i].split()[3])
+        if not real_z in ls_deps:
+            ls_deps.append(real_z)
+        d_hor = np.sqrt((real_x-calc_x)**2+(real_y-calc_y)**2)
+        d_ver = abs(real_z-calc_z)
+        ls_ev_hor = [d_hor, real_z]
+        ls_ev_ver = [d_ver, real_z]
+        ls_diffs_hor.append(ls_ev_hor)
+        ls_diffs_ver.append(ls_ev_ver)
+        xx, yy, zz = real_x, real_y, real_z
+        if xx == x0 and yy == y0 and zz == z0:
+            num_evs_sitio = num_evs_sitio + 1
+        out_f.write('%-5s  %12.5f  %12.5f  %12.5f  %12.5f  %12.5f\n' % (ev_id, real_x, real_y, real_z, d_hor, d_ver))
+
+# -------------------------------------------------------
+
+
+# -------------------------------------------------------
+# Funcion para convertir lista en lista de listas de tamanio size
+# -------------------------------------------------------
+def split_seq(seq, size):
+    newseq = []
+    splitsize = 1.0/size*len(seq)
+    for i in range(size):
+        newseq.append(seq[int(round(i*splitsize)):int(round((i+1)*splitsize))])
+    return newseq
+# -------------------------------------------------------
+
+
+grpd_ls_diffs_hor = [list(v) for l,v in groupby(ls_diffs_hor, key=lambda x:x[1:3])] # Agrupar segun profundidad
+grpd_ls_diffs_ver = [list(v) for l,v in groupby(ls_diffs_ver, key=lambda x:x[1:3])] 
+
+n_dep = len(ls_deps)
+len_vec = int(np.sqrt(len(real_data)/num_evs_sitio/n_dep))
+
+for i in range(len(grpd_ls_diffs_hor)):
+    for el in grpd_ls_diffs_hor[i]:
+        del el[-1]
+    for el in grpd_ls_diffs_ver[i]:
+        del el[-1]
+
+grpd_ls_diffs_hor_fin = []
+for dep in grpd_ls_diffs_hor:
+    new_dep_ls = []
+    flat_dep = [y for x in dep for y in x]
+    flat_dep = split_seq(flat_dep, len(flat_dep)/num_evs_sitio)
+    for grp in flat_dep:
+        sumsq = 0.0
+        for el in grp:
+            sumsq = sumsq + el**2
+        var = sumsq/len(grp)
+        stddev = np.sqrt(var)
+        new_dep_ls.append(stddev)
+    grpd_ls_diffs_hor_fin.append(new_dep_ls)
+
+grpd_ls_diffs_ver_fin = []
+for dep in grpd_ls_diffs_ver:
+    new_dep_ls = []
+    flat_dep = [y for x in dep for y in x]
+    flat_dep = split_seq(flat_dep, len(flat_dep)/num_evs_sitio)
+    for grp in flat_dep:
+        sumer = 0.0
+        for el in grp:
+            sumer = sumer + el
+        er_prom = np.abs(sumer)/len(grp)
+       # stddev = np.sqrt(var)
+        new_dep_ls.append(er_prom)
+    grpd_ls_diffs_ver_fin.append(new_dep_ls)
+
+
+#ds = (max(ls_x)-min(ls_x))/(len_vec-1)
+#x1 = np.array([[len_vec-1, 1], [0, 1]])
+#x2 = np.array([max(ls_x), min(ls_x)])
+#y1 = np.array([[0, 1], [len_vec-1, 1]])
+#y2 = np.array([max(ls_y), min(ls_y)])
+
+#sol_x = np.linalg.solve(x1, x2)
+#sol_y = np.linalg.solve(y1, y2)
+
+f_stas = open('station.dat', 'r')
+stas = f_stas.readlines()
+ls_xstas = []
+ls_ystas = []
+ls_vals_stas_r1 = []
+ls_vals_stas_r2 = []
+for i in range(len(stas)):
+    x0, y0 = 3., 0.
+    x = float(stas[i].split()[1])
+    y = float(stas[i].split()[2])
+    r = np.round(np.sqrt(x**2+y**2), decimals=1)
+    if y >= 0:
+        theta = np.round(np.arccos((x0*x + y0*y)/(np.sqrt(x0**2+y0**2)*np.sqrt(x**2+y**2)))*180/np.pi)
+    else:
+        theta = 360. - np.round(np.arccos((x0*x + y0*y)/(np.sqrt(x0**2+y0**2)*np.sqrt(x**2+y**2)))*180/np.pi)
+    if i in range(0, 3):
+        ls_vals_stas_r1.append([x, y, r, theta])
+    else:
+        ls_vals_stas_r2.append([x, y, r, theta])
+    ls_xstas.append(x)
+    ls_ystas.append(y)
+#    ls_xstas.append((x-sol_x[1])/sol_x[0])
+#    ls_ystas.append((y-sol_y[1])/sol_y[0])
+
+ls_vals_stas_r1.sort(key=lambda x: x[-1])
+ls_vals_stas_r2.sort(key=lambda x: x[-1])
+
+
+ls_gaps_r1 = []
+for i in range(len(ls_vals_stas_r1)):
+    if not i == len(ls_vals_stas_r1)-1:
+        x1, y1 = ls_vals_stas_r1[i][0], ls_vals_stas_r1[i][1]
+        x2, y2 = ls_vals_stas_r1[i+1][0], ls_vals_stas_r1[i+1][1]
+    else:
+        x1, y1 = ls_vals_stas_r1[i][0], ls_vals_stas_r1[i][1]
+        x2, y2 = ls_vals_stas_r1[0][0], ls_vals_stas_r1[0][1]
+    gap = np.round(np.arccos((x1*x2+y1*y2)/(np.sqrt(x1**2+y1**2)*np.sqrt(x2**2+y2**2)))*180/np.pi)
+    ls_gaps_r1.append(gap)
+ls_gaps_r2 = []
+for i in range(len(ls_vals_stas_r2)):
+    if not i == len(ls_vals_stas_r2)-1:
+        x1, y1 = ls_vals_stas_r2[i][0], ls_vals_stas_r2[i][1]
+        x2, y2 = ls_vals_stas_r2[i+1][0], ls_vals_stas_r2[i+1][1]
+    else:
+        x1, y1 = ls_vals_stas_r2[i][0], ls_vals_stas_r2[i][1]
+        x2, y2 = ls_vals_stas_r2[0][0], ls_vals_stas_r2[0][1]
+    gap = np.round(np.arccos((x1*x2+y1*y2)/(np.sqrt(x1**2+y1**2)*np.sqrt(x2**2+y2**2)))*180/np.pi)
+    ls_gaps_r2.append(gap)
+
+r1, r2 = ls_vals_stas_r1[0][2], ls_vals_stas_r2[0][2]
+gap1 = max(ls_gaps_r1)
+gap2 = max(ls_gaps_r2)
+
+
+# -------------------------------------------------------
+# Generar graficas para errores horizontales
+# -------------------------------------------------------
+for i in range(len(grpd_ls_diffs_hor_fin)):
+    flat_ls_hor = split_seq(grpd_ls_diffs_hor_fin[i], len_vec)
+    mat_hor = np.matrix(flat_ls_hor)
+    m = np.rot90(mat_hor, 1)
+    fig = plt.figure()#figsize=(10, 10))
+    ax = fig.add_subplot(1,1,1)
+    ax.set_aspect('equal')
+    plt.imshow(m, interpolation='gaussian', cmap=plt.cm.jet, extent=[min(ls_x), max(ls_x), min(ls_y), max(ls_y)], vmin=0, vmax=5)
+#    plt.imshow(m, interpolation='gaussian', cmap=plt.cm.jet, extent=[min(ls_x), max(ls_x), min(ls_y), max(ls_y)])
+    plt.colorbar()
+    plt.scatter(ls_xstas, ls_ystas, s=100, c='g', marker='^')
+    plt.title('Error Horizontal. Profundidad %s km\nR1 = %3.1f km, Gap1 = %3.1f\nR2 = %3.1f km, Gap2 = %3.1f' % (ls_deps[i], r1, gap1, r2, gap2))
+    plt.savefig('err_hor_prof_%skm.png' % ls_deps[i], bbox_inches='tight')
+#   plt.show()
+# -------------------------------------------------------
+
+# -------------------------------------------------------
+# Generar graficas para errores verticales
+# -------------------------------------------------------
+for i in range(len(grpd_ls_diffs_ver_fin)):
+    flat_ls_ver = split_seq(grpd_ls_diffs_ver_fin[i], len_vec)
+    mat_ver = np.matrix(flat_ls_ver)
+    m = np.rot90(mat_ver, 1)
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    ax.set_aspect('equal')
+    plt.imshow(m, interpolation='gaussian', cmap=plt.cm.jet, extent=[min(ls_x), max(ls_x), min(ls_y), max(ls_y)], vmin=0, vmax=5)
+#    plt.imshow(m, interpolation='gaussian', cmap=plt.cm.jet, extent=[min(ls_x), max(ls_x), min(ls_y), max(ls_y)])
+    plt.colorbar()
+    plt.scatter(ls_xstas, ls_ystas, s=100, c='g', marker='^')
+    plt.title('Error Vertical. Profundidad %s km\nR1 = %3.1f km, Gap1 = %3.1f\nR2 = %3.1f km, Gap2 = %3.1f' % (ls_deps[i], r1, gap1, r2, gap2))
+    plt.savefig('err_ver_prof_%skm.png' % ls_deps[i], bbox_inches='tight')
+#    plt.show()
+# -------------------------------------------------------
+

@@ -1,0 +1,17 @@
+# Create synthetic parameter file to define
+# dataset for location error
+#
+# Velocity model file name
+COL_FRACK
+# Station location file name
+station.dat
+# Sources location file name
+events.dat
+# Arrival times file name
+arrival.dat
+# Sigma of arrival times
+0.1
+# Number of Repeat events at each position 
+4
+# Layer depth where to have sources
+1 8 16

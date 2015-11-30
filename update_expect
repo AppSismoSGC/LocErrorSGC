@@ -1,0 +1,12 @@
+#!/usr/bin/expect
+#import pexpect
+
+spawn update
+expect "return for default"
+send ",,\n"
+expect "OPERATOR ID (max 4 char):"
+send "usr\n"
+expect "LOCK ID, (N/Y=Return)"
+send "\n"
+interact
+

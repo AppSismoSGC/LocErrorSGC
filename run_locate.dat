@@ -1,0 +1,12 @@
+# Running file for CG_LOCATION algorithm 
+# 
+# Velocity Model 
+COL_FRACK 
+# Station file 
+station.dat 
+# Arrival time file 
+arrival.dat 
+# Output file 
+loc_out.dat 
+# Norm (L1/L2) to use 
+1 

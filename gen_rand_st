@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+#
+
+# Simple script to generate random stations for input of network design 
+# program for induced seismicity monitoring. The output is the file
+# 'station.dat'
+
+import numpy as np
+import random
+
+l_az = list(np.arange(0, 360, 30))
+l_d1 = list(np.arange(0.5, 5.1, 0.5))
+l_d2 = list(np.arange(10, 31, 2))
+
+#print l_az, l_d1, l_d2
+
+n_st_d1 = 3
+n_st_d2 = 4
+r1 = random.choice(l_d1)
+r2 = random.choice(l_d2)
+
+ls_coords_d1 = []
+for el in range(n_st_d1):
+	#r1 = random.choice(l_d1)
+	theta = random.choice(l_az)
+	x = r1*np.cos(theta*np.pi/180)
+	y = r1*np.sin(theta*np.pi/180)
+	ls_coords_d1.append((x, y, r1, theta))
+ls_coords_d2 = []
+for el in range(n_st_d2):
+	#r2 = random.choice(l_d2)
+	theta = random.choice(l_az)
+	x = r2*np.cos(theta*np.pi/180)
+	y = r2*np.sin(theta*np.pi/180)
+	ls_coords_d2.append((x, y, r2, theta))
+
+ls_tot = ls_coords_d1 + ls_coords_d2
+
+with open('station.dat', 'w') as f_st:
+	for i in range(len(ls_tot)):
+		line = 'STA%s      %8.4f      %8.4f            0.0' % (i+1, float(ls_tot[i][0]), float(ls_tot[i][1]))
+		print line, ls_tot[i][2], ls_tot[i][3]
+		f_st.write('STA%s      %8.4f      %8.4f            0.0\n' % (i+1, float(ls_tot[i][0]), float(ls_tot[i][1])))

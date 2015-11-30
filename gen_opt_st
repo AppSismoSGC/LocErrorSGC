@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+#
+
+# Simple script to generate optimal disign of station networl. The output is the file
+# 'station_op.dat'
+
+import numpy as np
+import random
+
+l_az1 = 120.
+l_az2 = 90.
+theta1 = 10.
+theta2 = 0.
+r1 = 3.
+r2 = 20.
+
+#print l_az, l_d1, l_d2
+
+n_st_d1 = 3
+n_st_d2 = 4
+
+ls_coords_d1 = []
+for el in range(n_st_d1):
+	#r1 = random.choice(l_d1)
+	x = r1*np.cos(theta1*np.pi/180.)
+	y = r1*np.sin(theta1*np.pi/180.)
+	ls_coords_d1.append((x, y, r1, theta1))
+	theta1 = theta1 + l_az1
+ls_coords_d2 = []
+for el in range(n_st_d2):
+	#r2 = random.choice(l_d2)
+	x = r2*np.cos(theta2*np.pi/180.)
+	y = r2*np.sin(theta2*np.pi/180.)
+	ls_coords_d2.append((x, y, r2, theta2))
+	theta2 = theta2 + l_az2
+
+ls_tot = ls_coords_d1 + ls_coords_d2
+
+with open('station_op.dat', 'w') as f_st:
+	for i in range(len(ls_tot)):
+		line = 'STA%s      %8.4f      %8.4f            0.0' % (i+1, float(ls_tot[i][0]), float(ls_tot[i][1]))
+		print line, ls_tot[i][2], ls_tot[i][3]
+		f_st.write('STA%s      %8.4f      %8.4f            0.0\n' % (i+1, float(ls_tot[i][0]), float(ls_tot[i][1])))
